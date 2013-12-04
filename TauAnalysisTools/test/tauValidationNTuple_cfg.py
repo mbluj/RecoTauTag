@@ -34,9 +34,7 @@ process.out = cms.OutputModule(
 
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-#        'file:///disk1/knutzen/CMSSW/CMSSW_5_3_3_patch3/src/aachen3a/TEST/TEST/MyOutputFile.root'
          '/store/mc/Summer12/TTJets_TuneZ2star_8TeV-madgraph-tauola/AODSIM/PU_S8_START52_V9-v1/0000/B27ECBD4-06C2-E111-BEA5-001A9281171E.root' 
-
     ),
 
     dropDescendantsOfDroppedBranches = cms.untracked.bool(False),
