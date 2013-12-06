@@ -46,12 +46,13 @@ class TauValidationNTupleProd : public edm::EDAnalyzer {
       uct::ExpressionNtuple<TauInfoContainer> ntuple_;
 
       edm::InputTag tauSrc_;
+      edm::InputTag altTauSrc_;
       edm::InputTag triggerSrc_;
       double maxDR_;
       unsigned int Nvtx_;
       std::vector< std::string > filtNames ;
       TH1F * h_NumEvents;
-
+      bool isMC_;
       virtual void beginJob() ;
       virtual void analyze(const edm::Event&, const edm::EventSetup&);
       virtual void endJob() ;
@@ -63,7 +64,9 @@ class TauValidationNTupleProd : public edm::EDAnalyzer {
       const reco::Candidate* findBestMatch(const pat::Tau* TagTauObj,std::vector<const reco::Candidate*>& FilterSelection, double maxDR);
       const reco::GenParticle* findBestGenMatch(const pat::Tau* TagTauObj,std::vector<const reco::GenParticle*>& GenPart, double maxDR);
       std::vector<const reco::Candidate*> getRecoJetCollections(const edm::Event& evt);
-      const reco::Candidate* findBestJetMatch(const pat::Tau* TagTauObj,std::vector<const reco::Candidate* >& JetSel, double maxDR);
+      const reco::Candidate* findBestRecoObjMatch(const pat::Tau* TagTauObj,std::vector<const reco::Candidate* >& RecoObjSel, double maxDR);
+      const pat::Tau* findBestTauObjMatch(const pat::Tau* TagTauObj,std::vector<const pat::Tau* >& TauObjSel, double maxDR);
+      
 };
 
 
@@ -78,11 +81,12 @@ TauValidationNTupleProd::TauValidationNTupleProd(const edm::ParameterSet& iConfi
       ntuple_.initialize(*fs);
       h_NumEvents    = fs->make<TH1F>( "counter"  , "counter", 1,  0., 1. );
 
-      tauSrc_       =   iConfig.getParameter<edm::InputTag>("tauTag");
-      triggerSrc_   =   iConfig.getParameter<edm::InputTag>("trigTag");
-      maxDR_        =   iConfig.getParameter<double>("maxDR");
-      filtNames      =   iConfig.getParameter< std::vector<std::string> >("filterNames");
-
+      tauSrc_           =   iConfig.getParameter<edm::InputTag>("tauTag");
+      altTauSrc_        =   iConfig.getParameter<edm::InputTag>("altTauTag");
+      triggerSrc_       =   iConfig.getParameter<edm::InputTag>("trigTag");
+      maxDR_            =   iConfig.getParameter<double>("maxDR");
+      filtNames         =   iConfig.getParameter< std::vector<std::string> >("filterNames");
+      isMC_             =   iConfig.getParameter<bool>("runOnMC");
 
 }
 
@@ -154,6 +158,7 @@ std::vector<const pat::Tau*> TauValidationNTupleProd::getRecoCandCollections(con
   return output;
 }
 
+
 std::vector<const reco::Candidate*> TauValidationNTupleProd::getRecoJetCollections(const edm::Event& evt) {
     std::vector<const reco::Candidate*> output;
     edm::Handle< std::vector<pat::Jet> > handle;
@@ -165,15 +170,15 @@ std::vector<const reco::Candidate*> TauValidationNTupleProd::getRecoJetCollectio
   return output;
 }
 //Match pfJet to tagTau
-const reco::Candidate* TauValidationNTupleProd::findBestJetMatch(const pat::Tau* TagTauObj,
-    std::vector<const reco::Candidate* >& JetSel, double maxDR) {
+const reco::Candidate* TauValidationNTupleProd::findBestRecoObjMatch(const pat::Tau* TagTauObj,
+    std::vector<const reco::Candidate* >& RecoObjSel, double maxDR) {
   const reco::Candidate*  output = NULL;
   double bestDeltaR = -1;
-  for (size_t i = 0; i < JetSel.size(); ++i) {
-    double deltaR = reco::deltaR(*TagTauObj, *JetSel[i]);
+  for (size_t i = 0; i < RecoObjSel.size(); ++i) {
+    double deltaR = reco::deltaR(*TagTauObj, *RecoObjSel[i]);
     if (deltaR < maxDR) {
       if (!output || deltaR < bestDeltaR) {
-        output = JetSel[i];
+        output = RecoObjSel[i];
         bestDeltaR = deltaR;
       }
     }
@@ -181,6 +186,21 @@ const reco::Candidate* TauValidationNTupleProd::findBestJetMatch(const pat::Tau*
   return output;
 }
 
+const pat::Tau* TauValidationNTupleProd::findBestTauObjMatch(const pat::Tau* TagTauObj,
+    std::vector<const pat::Tau* >& TauObjSel, double maxDR) {
+  const pat::Tau*  output = NULL;
+  double bestDeltaR = -1;
+  for (size_t i = 0; i < TauObjSel.size(); ++i) {
+    double deltaR = reco::deltaR(*TagTauObj, *TauObjSel[i]);
+    if (deltaR < maxDR) {
+      if (!output || deltaR < bestDeltaR) {
+        output = TauObjSel[i];
+        bestDeltaR = deltaR;
+      }
+    }
+  }
+  return output;
+}
 
 // Get vector of collections of TriggerFilterObjects
 //
@@ -234,13 +254,16 @@ const reco::GenParticle* TauValidationNTupleProd::findBestGenMatch(const pat::Ta
 void
 TauValidationNTupleProd::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-    
+
     std::vector<const pat::Tau*> tauObjects = getRecoCandCollections(iEvent, tauSrc_);
+    std::vector<const pat::Tau*> altTauObjects = getRecoCandCollections(iEvent, altTauSrc_);
     std::vector<const reco::Candidate*> pfJets = getRecoJetCollections(iEvent);
-    std::vector<const reco::GenParticle*> GenObjects = getGenParticleCollection(iEvent);
+    std::vector<const reco::GenParticle*> GenObjects;
+    if(isMC_) GenObjects = getGenParticleCollection(iEvent);
     const reco::Vertex* Vertex = getVertexCollection(iEvent);
     std::vector<std::vector<const reco::Candidate*>> allTrigObjects;
-    const GenEventInfoProduct* genInfo = getGenEvtInfo(iEvent);
+    const GenEventInfoProduct* genInfo;
+    if(isMC_) genInfo = getGenEvtInfo(iEvent);
 
     for(unsigned int i = 0; i < filtNames.size(); i++){
 
@@ -256,7 +279,8 @@ TauValidationNTupleProd::analyze(const edm::Event& iEvent, const edm::EventSetup
             const pat::Tau* TagTau = tauObjects[i];
             std::vector<const reco::Candidate* > allBestFilterMatches;
             const reco::Candidate* bestGenMatch = findBestGenMatch(TagTau,GenObjects, maxDR_) ;
-            const reco::Candidate* bestJetMatch = findBestJetMatch(TagTau, pfJets, maxDR_);
+            const reco::Candidate* bestJetMatch = findBestRecoObjMatch(TagTau, pfJets, maxDR_);
+            const pat::Tau* bestAltTauObjMatch = findBestTauObjMatch(TagTau, altTauObjects, maxDR_);
 
             for(unsigned int j = 0; j < allTrigObjects.size(); j++){
 
@@ -265,7 +289,7 @@ TauValidationNTupleProd::analyze(const edm::Event& iEvent, const edm::EventSetup
                    
             }    
                 
-            theMatch = new TauInfoContainer(TagTau,&allBestFilterMatches,bestGenMatch,matches.size(),tauObjects.size(),genInfo ,Nvtx_, &iEvent, bestJetMatch, Vertex); // create a TauInfoContainer object for each tag tau
+            theMatch = new TauInfoContainer(TagTau,bestAltTauObjMatch,&allBestFilterMatches,bestGenMatch,matches.size(),tauObjects.size(),genInfo ,Nvtx_, &iEvent, bestJetMatch, Vertex); // create a TauInfoContainer object for each tag tau
 
             theMatch->genDecayMode();
 

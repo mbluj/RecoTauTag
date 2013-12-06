@@ -15,10 +15,12 @@ class TauInfoContainer {
     // Default needed for persistency
     TauInfoContainer(); 
 
-    TauInfoContainer( const pat::Tau* recoTauCand, std::vector<const reco::Candidate*>* trigObj, const reco::Candidate* GenParticle, unsigned int index, unsigned int nTotalObjects, const GenEventInfoProduct* GenInfo, unsigned int NVTX, const edm::Event* evt, const reco::Candidate* pfJet, const reco::Vertex* Vertex );
+    TauInfoContainer( const pat::Tau* recoTauCand, const pat::Tau* altTauObj, std::vector<const reco::Candidate*>* trigObj, const reco::Candidate* GenParticle, unsigned int index, unsigned int nTotalObjects, const GenEventInfoProduct* GenInfo, unsigned int NVTX, const edm::Event* evt, const reco::Candidate* pfJet, const reco::Vertex* Vertex );
     
     // Get tag tau object
     const pat::Tau* recoTauCand() const;
+
+    const pat::Tau* altTauObj() const;
 
     const reco::Candidate* PfJet() const;
 
@@ -30,6 +32,8 @@ class TauInfoContainer {
 
     // return true if pat::tau is matched to a hadronically decaying Gen Tau
     bool isTauGenJetMatched() const;
+
+    bool isAltTauObjMatched() const;
 
     bool isPfJetMatched() const;
 
@@ -63,9 +67,11 @@ class TauInfoContainer {
   private:
 
     const pat::Tau* recoTauCand_;
+    const pat::Tau* altTauObj_;
     std::vector<const reco::Candidate*>* trigObj_;
     const reco::Candidate* GenParticle_;
     reco::Candidate* dummyCandidate_;
+    pat::Tau* dummyCandidateTau_;
     unsigned int index_;
     unsigned int nTotalObjects_;
     const GenEventInfoProduct* genInfo_; 

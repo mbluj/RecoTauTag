@@ -5,16 +5,19 @@
 
 using namespace edm;
 
-TauInfoContainer::TauInfoContainer(const pat::Tau* recoTauCand, std::vector<const reco::Candidate*>* trigObj, const reco::Candidate* GenParticle ,unsigned int index, unsigned int nTotalObjects, const GenEventInfoProduct* GenInfo, unsigned int NVTX, const edm::Event* evt, const reco::Candidate* pfJet, const reco::Vertex* Vertex ):
-  recoTauCand_(recoTauCand), trigObj_(trigObj),GenParticle_(GenParticle),index_(index), nTotalObjects_(nTotalObjects), genInfo_(GenInfo),Nvtx_(NVTX),Evt_(evt), pfJet_(pfJet), Vertex_(Vertex){
+TauInfoContainer::TauInfoContainer(const pat::Tau* recoTauCand, const pat::Tau* altTauObj, std::vector<const reco::Candidate*>* trigObj, const reco::Candidate* GenParticle ,unsigned int index, unsigned int nTotalObjects, const GenEventInfoProduct* GenInfo, unsigned int NVTX, const edm::Event* evt, const reco::Candidate* pfJet, const reco::Vertex* Vertex ):
+  recoTauCand_(recoTauCand),altTauObj_(altTauObj), trigObj_(trigObj),GenParticle_(GenParticle),index_(index), nTotalObjects_(nTotalObjects), genInfo_(GenInfo),Nvtx_(NVTX),Evt_(evt), pfJet_(pfJet), Vertex_(Vertex){
   
         // Create a dummy reco::Candidate Object with unrealistic LorentzVector values as a default output to return in case of a failed matching.  
         dummyCandidate_ = dynamic_cast<reco::Candidate* >( recoTauCand->clone());
         math::XYZTLorentzVector *v = new math::XYZTLorentzVector();
         v->SetPxPyPzE(-999.,-999.,-9999.,-999.);
         dummyCandidate_->setP4(((const math::XYZTLorentzVector)*v)); 
+  
+        // Create a dummy reco::Candidate Object with unrealistic LorentzVector values as a default output to return in case of a failed matching.  
+        dummyCandidateTau_ = dynamic_cast<pat::Tau* >( recoTauCand->clone());
+        dummyCandidateTau_->setP4(((const math::XYZTLorentzVector)*v)); 
   }
-
 TauInfoContainer::TauInfoContainer(){}
 
 const reco::Vertex* TauInfoContainer::getPV() const{
@@ -32,6 +35,12 @@ unsigned int TauInfoContainer::nTotalObjects() const {
 
 const pat::Tau* TauInfoContainer::recoTauCand() const {
    return recoTauCand_;
+}
+
+const pat::Tau* TauInfoContainer::altTauObj() const {
+   return altTauObj_;
+   if( altTauObj_!= NULL) return altTauObj_;
+   else return dummyCandidateTau_; // Careful! Method return dummy object to ensure successfull termination of program. Only use GenParticle values if "bool TauInfoContainer::isGenParticelMatched()" returns "true"
 }
 
 const reco::Candidate* TauInfoContainer::PfJet() const {
@@ -73,6 +82,10 @@ const reco::Candidate* TauInfoContainer::GenTauJet() const {
 
 bool TauInfoContainer::isGenParticelMatched() const {
    return GenParticle_ != NULL;
+}
+
+bool TauInfoContainer::isAltTauObjMatched() const {
+   return altTauObj_ != NULL;
 }
 
 bool TauInfoContainer::isTauGenJetMatched() const {
