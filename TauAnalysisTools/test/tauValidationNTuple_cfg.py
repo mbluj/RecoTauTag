@@ -174,6 +174,7 @@ common_ntuple_branches = cms.PSet(
     recoTauCand_DecayMode = cms.string("recoTauCand.decayMode"),
     recoTauCand_Vz = cms.string("recoTauCand.vz"),
 
+    isAltTauObjMatched = cms.string("isAltTauObjMatched"),
     altTauObj_Pt = cms.string("altTauObj.pt"),
     altTauObj_Eta = cms.string("altTauObj.eta"),
     altTauObj_Phi = cms.string("altTauObj.phi"),

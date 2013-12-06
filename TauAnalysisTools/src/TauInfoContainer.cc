@@ -38,7 +38,6 @@ const pat::Tau* TauInfoContainer::recoTauCand() const {
 }
 
 const pat::Tau* TauInfoContainer::altTauObj() const {
-   return altTauObj_;
    if( altTauObj_!= NULL) return altTauObj_;
    else return dummyCandidateTau_; // Careful! Method return dummy object to ensure successfull termination of program. Only use GenParticle values if "bool TauInfoContainer::isGenParticelMatched()" returns "true"
 }
