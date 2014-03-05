@@ -18,13 +18,13 @@
 #include "RecoTauTag/TauAnalysisTools/interface/ExpressionNtupleColumn.h"
 
 // so we don't conflict with FinalStateAnalysis
-namespace uct {
+namespace tauval {
 
 template<class T>
 class ExpressionNtuple : private boost::noncopyable {
   public:
     ExpressionNtuple(const edm::ParameterSet& pset);
-    ~ExpressionNtuple();
+    virtual ~ExpressionNtuple();
 
     // Setup the tree in the given TFile
     void initialize(TFileDirectory& fs);

@@ -3,10 +3,13 @@
 #include <TLorentzVector.h>
 #include "Math/GenVector/LorentzVector.h"
 
+#include "DataFormats/Provenance/interface/EventID.h"
+#include "FWCore/Framework/interface/Event.h"
+
 using namespace edm;
 
 TauInfoContainer::TauInfoContainer(const pat::Tau* recoTauCand, const pat::Tau* altTauObj, std::vector<const reco::Candidate*>* trigObj, const reco::Candidate* GenParticle ,unsigned int index, unsigned int nTotalObjects, const GenEventInfoProduct* GenInfo, unsigned int NVTX, const edm::Event* evt, const reco::Candidate* pfJet, const reco::Vertex* Vertex ):
-  recoTauCand_(recoTauCand),altTauObj_(altTauObj), trigObj_(trigObj),GenParticle_(GenParticle),index_(index), nTotalObjects_(nTotalObjects), genInfo_(GenInfo),Nvtx_(NVTX),Evt_(evt), pfJet_(pfJet), Vertex_(Vertex){
+  recoTauCand_(recoTauCand), altTauObj_(altTauObj), trigObj_(trigObj), GenParticle_(GenParticle), index_(index), nTotalObjects_(nTotalObjects), genInfo_(GenInfo), Nvtx_(NVTX),/*Evt_(evt),*/ runNr_(evt->id().run() ), evtNr_(evt->id().event() ), lumiSec_(evt->id().luminosityBlock() ), pfJet_(pfJet), Vertex_(Vertex){
   
         // Create a dummy reco::Candidate Object with unrealistic LorentzVector values as a default output to return in case of a failed matching.  
         dummyCandidate_ = dynamic_cast<reco::Candidate* >( recoTauCand->clone());
@@ -19,6 +22,9 @@ TauInfoContainer::TauInfoContainer(const pat::Tau* recoTauCand, const pat::Tau* 
         dummyCandidateTau_->setP4(((const math::XYZTLorentzVector)*v)); 
   }
 TauInfoContainer::TauInfoContainer(){}
+
+TauInfoContainer::~TauInfoContainer(){}
+
 
 const reco::Vertex* TauInfoContainer::getPV() const{
    return Vertex_;
@@ -57,15 +63,15 @@ const GenEventInfoProduct* TauInfoContainer::genInfo() const {
 }
 
 double TauInfoContainer::RunNr() const {
-   return Evt_->id().run();
+   return runNr_;
 }
 
 double TauInfoContainer::EvtNr() const {
-   return Evt_->id().event();
+   return evtNr_;
 }
 
 double TauInfoContainer::LumiSec() const {
-   return Evt_->id().luminosityBlock();
+   return lumiSec_;
 }
 
 const reco::Candidate* TauInfoContainer::GenParticle() const {

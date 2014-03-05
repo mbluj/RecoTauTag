@@ -22,7 +22,8 @@ process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
 process.load("Configuration.Geometry.GeometryIdeal_cff")
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 if runOnMC:
-    process.GlobalTag.globaltag = cms.string('START53_V7F::All')
+    process.GlobalTag.globaltag = cms.string('START71_V1::All')
+    #process.GlobalTag.globaltag = cms.string('START53_V7F::All')
     #process.GlobalTag.globaltag = cms.string('START53_V19D::All')
 else:
     process.GlobalTag.globaltag = cms.string('GR_P_V43D::All')
@@ -33,7 +34,7 @@ process.load("PhysicsTools.PatAlgos.patSequences_cff")
 process.load("RecoVertex.Configuration.RecoVertex_cff")
 
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 ## Dummy output for PAT. Not used in the analysis ##
 process.out = cms.OutputModule(
@@ -46,7 +47,8 @@ process.out = cms.OutputModule(
 
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-         '/store/mc/Summer12/TTJets_TuneZ2star_8TeV-madgraph-tauola/AODSIM/PU_S8_START52_V9-v1/0000/B27ECBD4-06C2-E111-BEA5-001A9281171E.root' 
+         '/store/relval/CMSSW_7_1_0_pre3/RelValQQH1352T_Tauola_13/GEN-SIM-RECO/PU50ns_POSTLS171_V2-v1/00000/04638DB7-EBA0-E311-8B24-02163E008CDD.root'
+         #'/store/mc/Summer12/TTJets_TuneZ2star_8TeV-madgraph-tauola/AODSIM/PU_S8_START52_V9-v1/0000/B27ECBD4-06C2-E111-BEA5-001A9281171E.root' 
          #'/store/data/Run2012D/TauPlusX/AOD/22Jan2013-v1/30000/68EB3FB8-6187-E211-8CE1-0025904B5FBA.root'
     ),
 
@@ -58,12 +60,13 @@ process.source = cms.Source("PoolSource",
 )
 
 
-from PhysicsTools.SelectorUtils.pvSelector_cfi import pvSelector
-process.goodOfflinePrimaryVertices = cms.EDFilter(
-    "PrimaryVertexObjectFilter",
-    filterParams = pvSelector.clone( minNdof = cms.double(4.0), maxZ = cms.double(24.0) ),
-    src=cms.InputTag('offlinePrimaryVertices')
-    )
+#comment out as already definied somwhere in PAT
+#from PhysicsTools.SelectorUtils.pvSelector_cfi import pvSelector
+#process.goodOfflinePrimaryVertices = cms.EDFilter(
+#    "PrimaryVertexObjectFilter",
+#    filterParams = pvSelector.clone( minNdof = cms.double(4.0), maxZ = cms.double(24.0) ),
+#    src=cms.InputTag('offlinePrimaryVertices')
+#    )
 
 process.load("PhysicsTools/PatAlgos/patSequences_cff")
 
@@ -79,6 +82,10 @@ else:
 # switch on PAT trigger
 from PhysicsTools.PatAlgos.tools.trigTools import switchOnTrigger
 switchOnTrigger(process) #create pat trigger objects
+process.patTriggerSequence = cms.Sequence(
+    process.patTrigger*
+    process.patTriggerEvent)
+process.patDefaultSequence += process.patTriggerSequence
 
 process.load("RecoTauTag.Configuration.RecoPFTauTag_cff")
 
@@ -86,16 +93,17 @@ removeMCMatching(process, ['All'])
 
 from PhysicsTools.PatAlgos.tools.jetTools import *
 
-switchJetCollection(
-        process,
-        cms.InputTag('ak5PFJets'),
-        doJTA = True,
-        doBTagging = True,
-        jetCorrLabel = _jetCorrections,
-        doType1MET = False,
-        doJetID = True,
-        jetIdLabel = "ak5"
-)
+#do not switch
+#switchJetCollection(
+#        process,
+ #       cms.InputTag('ak5PFJets'),
+ #       doJTA = True,
+ #       doBTagging = True,
+ #       jetCorrLabel = _jetCorrections,
+ #       doType1MET = False,
+ #       doJetID = True,
+ #       jetIdLabel = "ak5"
+#)
 
 process.TFileService = cms.Service("TFileService",
                                                fileName = cms.string('TauValidationNTuple.root') #output file
@@ -114,45 +122,74 @@ filterName = [
 
 #Enter a list of HPS discriminators you want to store in the output tree for the tag tau
 IDName = [  
-          "decayModeFinding", 
-          "byVLooseIsolation", 
-          "byLooseIsolation", 
-          "byMediumIsolation", 
-          "byTightIsolation", 
-          "byVLooseIsolationDeltaBetaCorr",
-          "byLooseIsolationDeltaBetaCorr", 
-          "byMediumIsolationDeltaBetaCorr", 
-          "byTightIsolationDeltaBetaCorr", 
-          "byVLooseCombinedIsolationDeltaBetaCorr", 
-          "byLooseCombinedIsolationDeltaBetaCorr", 
-          "byMediumCombinedIsolationDeltaBetaCorr", 
-          "byTightCombinedIsolationDeltaBetaCorr", 
-          "byCombinedIsolationDeltaBetaCorrRaw", 
-          "byIsolationMVAraw", 
-          "byLooseIsolationMVA", 
-          "byMediumIsolationMVA", 
-          "byTightIsolationMVA", 
-          "byIsolationMVA2raw", 
-          "byLooseIsolationMVA2", 
-          "byMediumIsolationMVA2", 
-          "byTightIsolationMVA2", 
-          "byLooseCombinedIsolationDeltaBetaCorr3Hits", 
-          "byMediumCombinedIsolationDeltaBetaCorr3Hits", 
-          "byTightCombinedIsolationDeltaBetaCorr3Hits", 
-          "byCombinedIsolationDeltaBetaCorrRaw3Hits", 
-          "againstElectronMVA3raw", 
-          "againstElectronMVA3category", 
-          "againstElectronLooseMVA3", 
-          "againstElectronMediumMVA3", 
-          "againstElectronTightMVA3", 
-          "againstElectronVTightMVA3", 
-          "againstElectronDeadECAL", 
-          "againstMuonLoose2", 
-          "againstMuonMedium2", 
-          "againstMuonTight2", 
-          "againstMuonLoose3", 
-          "againstMuonTight3", 
-               ]
+    "decayModeFindingNewDMs",
+    "decayModeFindingOldDMs",
+    "decayModeFinding",
+    "byLooseIsolation",
+    "byVLooseCombinedIsolationDeltaBetaCorr",
+    "byLooseCombinedIsolationDeltaBetaCorr",
+    "byMediumCombinedIsolationDeltaBetaCorr",
+    "byTightCombinedIsolationDeltaBetaCorr",
+    "byCombinedIsolationDeltaBetaCorrRaw",
+    "byLooseCombinedIsolationDeltaBetaCorr3Hits",
+    "byMediumCombinedIsolationDeltaBetaCorr3Hits",
+    "byTightCombinedIsolationDeltaBetaCorr3Hits",
+    "byCombinedIsolationDeltaBetaCorrRaw3Hits",
+    "chargedIsoPtSum",
+    "neutralIsoPtSum",
+    "puCorrPtSum",
+    "byIsolationMVA3oldDMwoLTraw",
+    "byVLooseIsolationMVA3oldDMwoLT",
+    "byLooseIsolationMVA3oldDMwoLT",
+    "byMediumIsolationMVA3oldDMwoLT",
+    "byTightIsolationMVA3oldDMwoLT",
+    "byVTightIsolationMVA3oldDMwoLT",
+    "byVVTightIsolationMVA3oldDMwoLT",
+    "byIsolationMVA3oldDMwLTraw",
+    "byVLooseIsolationMVA3oldDMwLT",
+    "byLooseIsolationMVA3oldDMwLT",
+    "byMediumIsolationMVA3oldDMwLT",
+    "byTightIsolationMVA3oldDMwLT",
+    "byVTightIsolationMVA3oldDMwLT",
+    "byVVTightIsolationMVA3oldDMwLT",
+    "byIsolationMVA3newDMwoLTraw",
+    "byVLooseIsolationMVA3newDMwoLT",
+    "byLooseIsolationMVA3newDMwoLT",
+    "byMediumIsolationMVA3newDMwoLT",
+    "byTightIsolationMVA3newDMwoLT",
+    "byVTightIsolationMVA3newDMwoLT",
+    "byVVTightIsolationMVA3newDMwoLT",
+    "byIsolationMVA3newDMwLTraw",
+    "byVLooseIsolationMVA3newDMwLT",
+    "byLooseIsolationMVA3newDMwLT",
+    "byMediumIsolationMVA3newDMwLT",
+    "byTightIsolationMVA3newDMwLT",
+    "byVTightIsolationMVA3newDMwLT",
+    "byVVTightIsolationMVA3newDMwLT",
+    "againstElectronLoose",
+    "againstElectronMedium",
+    "againstElectronTight",
+    "againstElectronMVA5raw",
+    "againstElectronMVA5category",
+    "againstElectronVLooseMVA5",
+    "againstElectronLooseMVA5",
+    "againstElectronMediumMVA5",
+    "againstElectronTightMVA5",
+    "againstElectronVTightMVA5",
+    "againstElectronDeadECAL",
+    "againstMuonLoose",
+    "againstMuonMedium",
+    "againstMuonTight",
+    "againstMuonLoose2",
+    "againstMuonMedium2",
+    "againstMuonTight2",
+    "againstMuonLoose3",
+    "againstMuonTight3",
+    "againstMuonMVAraw",
+    "againstMuonLooseMVA",
+    "againstMuonMediumMVA",
+    "againstMuonTightMVA",
+    ]
 
 common_ntuple_branches = cms.PSet(
     index = cms.string("index"), # Index of reco object in the event
@@ -192,7 +229,7 @@ common_ntuple_branches = cms.PSet(
 
 )
 if runOnMC:
-    common_ntuple_branches.genWeight = cms.string("genInfo.weight")
+    #common_ntuple_branches.genWeight = cms.string("? genInfo!=0 ? genInfo.weight : 1 ")
 
     common_ntuple_branches.isGenParticleMatched = cms.string("isGenParticelMatched")
     # Careful! Only use GenTauMatch (returns the values of the generator particle matched to the tagTau) values if "bool TauTrigMatch::GenTauMatchTest()" returns "true". Otherwise it contains (unrealsitic) default values
@@ -232,7 +269,7 @@ process.tauNTuple.filterNames = cms.vstring( filterName )
 
 process.p = cms.Path(
         process.goodOfflinePrimaryVertices*
-        process.recoTauClassicHPSSequence*
+        process.PFTau*
         process.patDefaultSequence*
         process.tauNTuple
         )

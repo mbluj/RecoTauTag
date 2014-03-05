@@ -21,13 +21,14 @@
 #include "CommonTools/Utils/interface/StringObjectFunction.h"
 #include <TMath.h>
 
-namespace uct {
+namespace tauval {
 
 template<typename ObjType>
 class ExpressionNtupleColumn {
   public:
     ExpressionNtupleColumn(const std::string& name, const std::string& func);
     /// Compute the column function and store result in branch variable
+    virtual ~ExpressionNtupleColumn();
     void compute(const ObjType& obj);
   protected:
     /// Abstract function which takes the result from the compute and fills the
@@ -42,6 +43,8 @@ template<typename T>
 ExpressionNtupleColumn<T>::ExpressionNtupleColumn(
     const std::string& name, const std::string& func):
   name_(name), func_(func, true) {}
+template<typename T>
+ExpressionNtupleColumn<T>::~ExpressionNtupleColumn() {}
 
 template<typename T> void ExpressionNtupleColumn<T>::compute(const T& obj) {
   this->setValue(func_(obj));

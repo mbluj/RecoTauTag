@@ -38,12 +38,12 @@
 class TauValidationNTupleProd : public edm::EDAnalyzer {
    public:
       explicit TauValidationNTupleProd(const edm::ParameterSet&);
-      ~TauValidationNTupleProd();
+      virtual ~TauValidationNTupleProd();
 
 
    private:
 
-      uct::ExpressionNtuple<TauInfoContainer> ntuple_;
+      tauval::ExpressionNtuple<TauInfoContainer> ntuple_;
 
       edm::InputTag tauSrc_;
       edm::InputTag altTauSrc_;
@@ -78,7 +78,7 @@ TauValidationNTupleProd::TauValidationNTupleProd(const edm::ParameterSet& iConfi
 
       Nvtx_=0;
 
-      ntuple_.initialize(*fs);
+      ntuple_.initialize( fs->tFileDirectory() );
       h_NumEvents    = fs->make<TH1F>( "counter"  , "counter", 1,  0., 1. );
 
       tauSrc_           =   iConfig.getParameter<edm::InputTag>("tauTag");
@@ -117,8 +117,9 @@ const GenEventInfoProduct* TauValidationNTupleProd::getGenEvtInfo(const edm::Eve
     //GenEventInfoProduct* const output;
 
     edm::Handle<GenEventInfoProduct> evt_info;
-    evt.getByType(evt_info);
-   GenEventInfoProduct const *output = &(*evt_info);
+    //MBevt.getByType(evt_info);
+    evt.getByLabel("generator",evt_info);//is it always called "generator"?
+    GenEventInfoProduct const *output = &(*evt_info);
     //output = 0; 
   return output;
 }
@@ -262,7 +263,7 @@ TauValidationNTupleProd::analyze(const edm::Event& iEvent, const edm::EventSetup
     if(isMC_) GenObjects = getGenParticleCollection(iEvent);
     const reco::Vertex* Vertex = getVertexCollection(iEvent);
     std::vector<std::vector<const reco::Candidate*>> allTrigObjects;
-    const GenEventInfoProduct* genInfo;
+    const GenEventInfoProduct* genInfo=0;
     if(isMC_) genInfo = getGenEvtInfo(iEvent);
 
     for(unsigned int i = 0; i < filtNames.size(); i++){

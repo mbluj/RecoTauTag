@@ -2,13 +2,17 @@
 #define TauInfoContainer_h
 
 #include "DataFormats/Candidate/interface/Candidate.h"
-#include "DataFormats/Provenance/interface/EventID.h"
+//#include "DataFormats/Provenance/interface/EventID.h"
 #include "DataFormats/PatCandidates/interface/Tau.h"
 #include "PhysicsTools/JetMCUtils/interface/JetMCTag.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
-#include "FWCore/Framework/interface/Event.h"
+//#include "FWCore/Framework/interface/Event.h"
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
+
+namespace edm {
+  class Event; 
+}
 
 class TauInfoContainer {
   public:
@@ -16,7 +20,9 @@ class TauInfoContainer {
     TauInfoContainer(); 
 
     TauInfoContainer( const pat::Tau* recoTauCand, const pat::Tau* altTauObj, std::vector<const reco::Candidate*>* trigObj, const reco::Candidate* GenParticle, unsigned int index, unsigned int nTotalObjects, const GenEventInfoProduct* GenInfo, unsigned int NVTX, const edm::Event* evt, const reco::Candidate* pfJet, const reco::Vertex* Vertex );
-    
+
+    virtual ~TauInfoContainer();
+
     // Get tag tau object
     const pat::Tau* recoTauCand() const;
 
@@ -76,7 +82,8 @@ class TauInfoContainer {
     unsigned int nTotalObjects_;
     const GenEventInfoProduct* genInfo_; 
     unsigned int Nvtx_;
-    const edm::Event* Evt_;
+    //const edm::Event* Evt_;
+    unsigned int runNr_, evtNr_, lumiSec_;    
     const reco::Candidate* pfJet_;
     const reco::Vertex* Vertex_;
 };
